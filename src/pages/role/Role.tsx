@@ -4,11 +4,14 @@ import { RoleList } from "@/services/role";
 import { RoleItem, roleListRequest } from "@/types/role";
 import { useRequest } from "ahooks";
 import { Button, Input, Select, Space, Table, Tooltip } from "antd";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { EyeOutlined } from "@ant-design/icons";
-import RoleDetailPage from "@/components/RoleEdit";
+import RoleDetailPage from "@/components/role/RoleEdit";
+import { GetPolicyList } from "@/services/policy";
+import useApp from "antd/es/app/useApp";
 const { Search } = Input;
 const RolePage = () => {
+  const { message } = useApp();
   // 分页参数管理
   const { pageNum, pageSizeNum, statusNum, setPagination } =
     usePaginationParams({
@@ -61,6 +64,7 @@ const RolePage = () => {
               type="link"
               icon={<EyeOutlined />}
               onClick={() => {
+                listPolicesRun();
                 setRoleId(record.id.toString());
                 setRoleEdit(true);
               }}
@@ -82,6 +86,29 @@ const RolePage = () => {
     setSearch(searchKeyword, searchValue);
     refresh();
   };
+
+  const { run: listPolicesRun, data: listPolicesData } = useRequest(
+    () => GetPolicyList({ page: -1, pageSize: -1 }),
+    {
+      manual: true,
+      onError: (err) => message.error(`${err.message}`),
+    }
+  );
+
+  const policyOptions = useMemo(() => {
+    if (listPolicesData) {
+      return (
+        listPolicesData.items.map((policy) => ({
+          label: `${policy.name} (${policy.method.toUpperCase()} ${
+            policy.path
+          })`,
+          value: policy.id,
+          rawData: policy,
+        })) || []
+      );
+    }
+  }, [listPolicesData]);
+
   return (
     <div className="px-4">
       <Space className="mb-4" wrap size={16}>
@@ -104,7 +131,11 @@ const RolePage = () => {
             </Select>
           }
         />
+        <Button type="primary" onClick={() => {}}>
+          创建角色
+        </Button>
       </Space>
+
       <Table
         size="middle"
         rowKey="id"
@@ -130,6 +161,7 @@ const RolePage = () => {
         bordered
       />
       <RoleDetailPage
+        policyOptions={policyOptions}
         open={roleEdit}
         id={roleId}
         onCancel={() => {

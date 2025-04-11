@@ -3,12 +3,14 @@ import { Input, Modal, Space } from "antd";
 interface EnableUserComponentProps {
   enableUser: {
     open: boolean;
+    name: string;
     id: string;
     password: string;
   };
   setEnableUser: React.Dispatch<
     React.SetStateAction<{
       open: boolean;
+      name: string;
       id: string;
       password: string;
     }>
@@ -25,15 +27,18 @@ const EnableUserComponent = ({
   return (
     <Modal
       open={enableUser.open}
+      destroyOnClose={true}
+      maskClosable={false}
       title={
         <Space>
-          <span>启用用户 {enableUser.id}</span>
+          <span>启用用户 {enableUser.name}</span>
           <span style={{ color: "red" }}>（需要重新设置密码）</span>
         </Space>
       }
       onCancel={() => {
         setEnableUser({
           open: false,
+          name: "",
           id: "",
           password: "",
         });

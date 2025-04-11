@@ -2,13 +2,13 @@ import { useRequest } from "ahooks";
 import { Button, Input, Select, Space, Table, Tooltip } from "antd";
 import { useState } from "react";
 import { UserDelete, UserEnable, UserList } from "@/services/user";
-import CreateUserModal from "@/components/CreateUserModal";
+import CreateUserModal from "@/components/user/CreateUserModal";
 import usePaginationParams from "@/hooks/usePaginationParams";
-import { userListRequest, UserListResponseItem } from "@/types/user";
+import type { userListRequest, UserListResponseItem } from "@/types/user";
 import useSearchParamsHook from "@/hooks/useSearchParams";
-import EditUserRolePage from "@/components/EditUserRole";
+import EditUserRolePage from "@/components/user/EditUserRole";
 import { EditOutlined, StopOutlined, CheckOutlined } from "@ant-design/icons";
-import EnableUserComponent from "@/components/EnableUser";
+import EnableUserComponent from "@/components/user/EnableUser";
 import useApp from "antd/es/app/useApp";
 const { Search } = Input;
 const UserPage = () => {
@@ -71,6 +71,7 @@ const UserPage = () => {
   // 用户启用
   const [enableUser, setEnableUser] = useState({
     open: false,
+    name: "",
     id: "",
     password: "",
   });
@@ -82,6 +83,7 @@ const UserPage = () => {
         message.success("启用成功");
         setEnableUser({
           open: false,
+          name: "",
           id: "",
           password: "",
         });
@@ -136,7 +138,7 @@ const UserPage = () => {
                     icon={<StopOutlined />}
                     onClick={() => {
                       modal.confirm({
-                        title: "确认禁用用户？",
+                        title: `确认禁用${record.name}用户?`,
                         content:
                           "禁用后用户将无法登录系统，确定要执行此操作吗？",
                         okText: "确认",
@@ -160,6 +162,7 @@ const UserPage = () => {
                       return {
                         ...prev,
                         open: true,
+                        name: record.name,
                         id: record.id.toString(),
                         password: "",
                       };

@@ -18,16 +18,22 @@ import {
 } from "@ant-design/icons";
 import ThemeToggle from "./ThemeToggle";
 import KubernetesIcon from "@/assets/kubernetes.svg?react";
-import { UserInfo, UserLogout } from "@/services/user";
+import { UserLogout } from "@/services/user";
 import { useRequest } from "ahooks";
-export default function AppHeader({ background }: { background: string }) {
+import { UserInfoResponse } from "@/types/user";
+
+interface AppHeaderProps {
+  background: string;
+  userData: UserInfoResponse | undefined;
+  userLoad: boolean;
+}
+export default function AppHeader({
+  background,
+  userData,
+  userLoad,
+}: AppHeaderProps) {
   const [messageApi, contextHolder] = message.useMessage();
   const { theme } = useContext(GlobalContext);
-  const { data, loading } = useRequest(UserInfo, {
-    onError: (error) => {
-      messageApi.error(error.message);
-    },
-  });
   const { run: logoutRun } = useRequest(UserLogout, {
     manual: true,
     onSuccess: () => {
@@ -42,19 +48,19 @@ export default function AppHeader({ background }: { background: string }) {
     {
       key: "profile",
       label: (
-        <Card loading={loading}>
+        <Card loading={userLoad}>
           <div className="flex flex-wrap gap-y-3">
             <div className="w-full">
               <p
                 className="font-medium m-0"
                 style={{ color: theme === "dark" ? "#fff" : "#1890ff" }}
               >
-                {data?.nickName || data?.name || "未知用户"}
+                {userData?.nickName || userData?.name || "未知用户"}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {data?.roleName &&
-                data?.roleName.map((role) => {
+              {userData?.roleName &&
+                userData?.roleName.map((role) => {
                   return (
                     <span
                       key={role}
@@ -72,11 +78,15 @@ export default function AppHeader({ background }: { background: string }) {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <UserOutlined className="opacity-60" />
-              <span className="opacity-90">{data?.name || "未提供用户名"}</span>
+              <span className="opacity-90">
+                {userData?.name || "未提供用户名"}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <MailOutlined className="opacity-60" />
-              <span className="opacity-90">{data?.email || "未提供邮箱"}</span>
+              <span className="opacity-90">
+                {userData?.email || "未提供邮箱"}
+              </span>
             </div>
           </div>
         </Card>
@@ -118,14 +128,14 @@ export default function AppHeader({ background }: { background: string }) {
 
       <Space size="middle" className="flex items-center gap-4">
         <ThemeToggle />
-        {loading ? (
+        {userLoad ? (
           <Spin size="small" />
         ) : (
           <Dropdown menu={{ items }} trigger={["click"]}>
             <Avatar
               style={{ cursor: "pointer" }}
-              src={data?.avatar}
-              icon={!data?.avatar && <UserOutlined />}
+              src={userData?.avatar}
+              icon={!userData?.avatar && <UserOutlined />}
             />
           </Dropdown>
         )}

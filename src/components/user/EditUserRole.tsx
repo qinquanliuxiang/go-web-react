@@ -1,6 +1,7 @@
 import { RoleList } from "@/services/role";
 import { userAddRole, userQuery, userRemoveRole } from "@/services/user";
-import { options } from "@/types";
+import { Options } from "@/types";
+import { openNewWindow } from "@/utils/openWindowns";
 import { useRequest } from "ahooks";
 import {
   Modal,
@@ -13,7 +14,7 @@ import {
   Divider,
 } from "antd";
 import useApp from "antd/es/app/useApp";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface EditUserRolePageProps {
   open: boolean;
@@ -39,17 +40,18 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
 
   const allRoles = useRef<string[]>([]);
 
-  const [rolesOptions, setRolesOptions] = useState<options[]>([]);
+  const [rolesOptions, setRolesOptions] = useState<Options[]>([]);
   // 获取所有角色
   const { run: roleRun } = useRequest(RoleList, {
     manual: true,
     onSuccess(data) {
-      console.log("data", data);
-
       const _allRoles = data.items.map((role) => {
         return role.name;
       });
       allRoles.current = _allRoles;
+    },
+    onError(error) {
+      message.error(error.message);
     },
   });
 
@@ -60,27 +62,30 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
     }
   }, [open]);
 
+  useEffect(() => {
+    let opt: Options[] = [];
+    if (!userData?.roles && allRoles.current) {
+      opt = allRoles.current.map((role) => ({
+        label: role,
+        value: role,
+      }));
+    }
+
+    if (userData?.roles && allRoles.current) {
+      opt = allRoles.current
+        .filter((role) => !userData.roles.find((r) => r.name === role)) // 过滤掉相同的角色
+        .map((role) => ({
+          label: role,
+          value: role,
+        }));
+    }
+    setRolesOptions(opt);
+  }, [userData?.roles, allRoles.current]);
+
   // 选中的新角色
   const [selectedRoleId, setSelectedRoleId] = useState<string[]>();
 
-  // 计算可添加的角色列表
-  const availableRoles = useMemo(() => {
-    return allRoles.current.filter(
-      (role) => !userData?.roles.some((userRole) => userRole.name === role)
-    );
-  }, [userData?.roles]);
-
-  useEffect(() => {
-    if (availableRoles) {
-      const _rolesOptions = availableRoles.map((role) => {
-        return {
-          label: role,
-          value: role,
-        };
-      });
-      setRolesOptions(_rolesOptions);
-    }
-  }, [availableRoles]);
+  useEffect(() => {}, [userData]);
 
   // 添加角色
   const { run: userAddRoleRun, loading: userAddRoleLoad } = useRequest(
@@ -122,10 +127,14 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
       <Modal
         title="编辑用户角色"
         open={open}
-        onCancel={onCancel}
+        onCancel={() => {
+          onCancel();
+          setSelectedRoleId(undefined);
+        }}
         footer={null}
         width={800}
-        centered
+        destroyOnClose={true}
+        maskClosable={false}
         loading={userLoad}
       >
         {/* 用户信息展示 */}
@@ -152,7 +161,7 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
               className="min-w-2xs"
               mode="multiple"
               placeholder="请选择角色"
-              options={rolesOptions}
+              options={rolesOptions ? rolesOptions : []}
               value={selectedRoleId}
               onChange={(value) => setSelectedRoleId(value)}
             />
@@ -162,7 +171,7 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
               onClick={() => {
                 if (selectedRoleId && userData) {
                   modal.confirm({
-                    title: "确认添加角色？",
+                    title: `确认添加 ${selectedRoleId} 角色？`,
                     content: "确定要添加该角色吗？",
                     okText: "确认",
                     okType: "danger",
@@ -182,7 +191,7 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
               disabled={selectedRowKeys.length === 0}
               onClick={() => {
                 modal.confirm({
-                  title: "确认删除角色？",
+                  title: `确认删除 ${selectedRowKeys} 角色？`,
                   content: "确定要删除该角色吗？",
                   okText: "确认",
                   okType: "danger",
@@ -205,7 +214,23 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
             loading={userLoad}
             columns={[
               { title: "角色ID", dataIndex: "id" },
-              { title: "角色名称", dataIndex: "name" },
+              {
+                title: "角色名称",
+                dataIndex: "name",
+                render: (_, record) => {
+                  return (
+                    <a
+                      onClick={() => {
+                        openNewWindow(
+                          `/workspace/ram/role?page=1&pageSize=10&status=1&keyword=name&value=${record.name}`
+                        );
+                      }}
+                    >
+                      {record.name}
+                    </a>
+                  );
+                },
+              },
               { title: "角色描述", dataIndex: "description" },
             ]}
             dataSource={userData?.roles || []}

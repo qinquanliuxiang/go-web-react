@@ -1,11 +1,12 @@
 import { createBrowserRouter } from "react-router-dom";
-import Root from "./pages/Root";
 import { MenuProps } from "antd";
+import Root from "./pages/Root";
 import RolePage from "./pages/role/Role";
-import LayoutPage from "./layout/layout";
-import loginPage from "./pages/login/login";
+import LayoutPage from "./layout/Layout";
+import loginPage from "./pages/login/Login";
 import UserPage from "./pages/user/User";
-type MenuItem = Required<MenuProps>["items"][number];
+import PolicyPage from "./pages/policy/Policy";
+export type MenuItem = Required<MenuProps>["items"][number];
 
 const router = createBrowserRouter([
   {
@@ -27,6 +28,10 @@ const router = createBrowserRouter([
                 path: "role",
                 Component: RolePage,
               },
+              {
+                path: "policy",
+                Component: PolicyPage,
+              },
             ],
           },
         ],
@@ -39,28 +44,48 @@ const router = createBrowserRouter([
   },
 ]);
 
-export default router;
+const menuItem: MenuItem[] = [];
 
-const GetMemuItem = (): MenuItem[] => {
-  return [
-    {
-      key: "ram",
-      icon: null,
-      label: "用户",
-      children: [
-        {
-          key: "user",
-          icon: null,
-          label: "用户列表",
-        },
-        {
-          key: "role",
-          icon: null,
-          label: "角色列表",
-        },
-      ],
-    },
-  ];
+const adminMemuItem: MenuItem[] = [
+  {
+    key: "ram",
+    icon: null,
+    label: "用户",
+    children: [
+      {
+        key: "user",
+        icon: null,
+        label: "用户列表",
+      },
+      {
+        key: "role",
+        icon: null,
+        label: "角色列表",
+      },
+      {
+        key: "policy",
+        icon: null,
+        label: "策略列表",
+      },
+    ],
+  },
+];
+
+const GetMemuItem = (roles: string[]): MenuItem[] => {
+  const menum: MenuItem[] = [];
+
+  roles.some((role) => {
+    if (role === "admin") {
+      menum.push(...adminMemuItem);
+    }
+  });
+
+  if (menuItem.length > 0) {
+    menum.push(...menuItem);
+  }
+
+  return menum;
 };
 
 export { GetMemuItem };
+export default router;

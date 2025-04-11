@@ -35,6 +35,8 @@ const CreateUserModal = ({ open, onClose, refresh }: CreateUserModalProps) => {
     <>
       {contextHolder}
       <Modal
+        destroyOnClose={true}
+        maskClosable={false}
         title="新增用户"
         open={open}
         onCancel={() => {

@@ -19,4 +19,6 @@ export interface PolicyItem {
 export interface PolicyListRequest {
   page: number;
   pageSize: number;
+  keyword?: string;
+  value?: string;
 }

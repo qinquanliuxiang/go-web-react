@@ -10,23 +10,30 @@ import {
   Select,
 } from "antd";
 import { RoleAddPolices, RoleQuery, RoleRemovePolices } from "@/services/role";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import useApp from "antd/es/app/useApp";
-import { GetPolicyList } from "@/services/policy";
+import { openNewWindow } from "@/utils/openWindowns";
+import type { PolicyItem } from "@/types/policy";
+import { PolicyOptions } from "@/types";
 
 interface RoleEditComponentProps {
+  policyOptions: PolicyOptions[] | undefined;
   open: boolean;
   id: string;
   onCancel: () => void;
 }
 
-const RoleDetailPage = ({ id, open, onCancel }: RoleEditComponentProps) => {
+const RoleDetailPage = ({
+  id,
+  open,
+  onCancel,
+  policyOptions,
+}: RoleEditComponentProps) => {
   const { modal, message } = useApp();
   const [selectedPolciyId, setSelectedPolciyId] = useState<string[]>([]);
   useEffect(() => {
     if (open) {
       roleRun(id);
-      listPolicesRun();
     }
   }, [open]);
 
@@ -43,17 +50,6 @@ const RoleDetailPage = ({ id, open, onCancel }: RoleEditComponentProps) => {
     },
   });
 
-  // 处理权限更新
-  // const { run: updatePolicies } = useRequest(UpdateRolePolicies, {
-  //   manual: true,
-  //   onSuccess: () => {
-  //     message.success("权限更新成功");
-  //     refresh();
-  //     setFormVisible(false);
-  //   },
-  //   onError: (err) => message.error(`更新失败: ${err.message}`),
-  // });
-
   // 处理权限删除
   const { run: roleRemovPoliyc, loading: roleRemovPoliycLoad } = useRequest(
     RoleRemovePolices,
@@ -66,31 +62,6 @@ const RoleDetailPage = ({ id, open, onCancel }: RoleEditComponentProps) => {
       onError: (err) => message.error(`删除失败: ${err.message}`),
     }
   );
-
-  const { run: listPolicesRun, data: listPolicesData } = useRequest(
-    () => GetPolicyList({ page: -1, pageSize: -1 }),
-    {
-      manual: true,
-      onSuccess: (res) => {
-        console.log(res);
-      },
-      onError: (err) => message.error(`${err.message}`),
-    }
-  );
-
-  const policyOptions = useMemo(() => {
-    if (listPolicesData) {
-      return (
-        listPolicesData.items.map((policy) => ({
-          label: `${policy.name} (${policy.method.toUpperCase()} ${
-            policy.path
-          })`,
-          value: policy.id,
-          rawData: policy,
-        })) || []
-      );
-    }
-  }, [listPolicesData]);
 
   const { run: roleAddPolces, loading: roleAddPolcesLoad } = useRequest(
     RoleAddPolices,
@@ -110,6 +81,19 @@ const RoleDetailPage = ({ id, open, onCancel }: RoleEditComponentProps) => {
       title: "策略名称",
       dataIndex: "name",
       width: 150,
+      render: (text: string, record: PolicyItem) => {
+        return (
+          <a
+            onClick={() => {
+              openNewWindow(
+                `/workspace/ram/policy?page=1&pageSize=10&status=1&keyword=name&value=${record.name}`
+              );
+            }}
+          >
+            {text}
+          </a>
+        );
+      },
     },
     {
       title: "路径",
@@ -135,6 +119,8 @@ const RoleDetailPage = ({ id, open, onCancel }: RoleEditComponentProps) => {
   return (
     <div className="px-4 w-full">
       <Modal
+        destroyOnClose={true}
+        maskClosable={false}
         width={800}
         open={open}
         onCancel={() => {
