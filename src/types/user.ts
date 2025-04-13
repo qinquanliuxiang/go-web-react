@@ -75,3 +75,13 @@ export interface Role {
   name: string;
   description: string;
 }
+export interface UserUpdateRequest {
+  avatar: string;
+  mobile: string;
+  nickName: string;
+}
+
+export interface UserUpPwdRequest {
+  oldPassword: string;
+  newPassword: string;
+}

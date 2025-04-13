@@ -1,4 +1,5 @@
-import { Input, Modal, Space } from "antd";
+import { Input, Space } from "antd";
+import ModalComponent from "../base/Modal";
 
 interface EnableUserComponentProps {
   enableUser: {
@@ -24,33 +25,33 @@ const EnableUserComponent = ({
   enableUserRun,
   loading,
 }: EnableUserComponentProps) => {
+  const handleOk = () => {
+    enableUserRun(enableUser.id, enableUser.password);
+  };
+  const handleCancel = () => {
+    setEnableUser({
+      open: false,
+      name: "",
+      id: "",
+      password: "",
+    });
+  };
   return (
-    <Modal
+    <ModalComponent
       open={enableUser.open}
-      destroyOnClose={true}
-      maskClosable={false}
+      handleCancel={handleCancel}
+      handleOk={handleOk}
+      confirmLoading={loading}
       title={
         <Space>
           <span>启用用户 {enableUser.name}</span>
           <span style={{ color: "red" }}>（需要重新设置密码）</span>
         </Space>
       }
-      onCancel={() => {
-        setEnableUser({
-          open: false,
-          name: "",
-          id: "",
-          password: "",
-        });
-      }}
-      onOk={() => {
-        enableUserRun(enableUser.id, enableUser.password);
-      }}
-      okText="启用"
-      cancelText="取消"
-      confirmLoading={loading}
     >
       <Input.Password
+        className="m-4"
+        size="large"
         max={20}
         min={8}
         value={enableUser.password}
@@ -62,7 +63,7 @@ const EnableUserComponent = ({
         }
         placeholder="请输入密码"
       />
-    </Modal>
+    </ModalComponent>
   );
 };
 export default EnableUserComponent;

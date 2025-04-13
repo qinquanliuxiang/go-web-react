@@ -82,3 +82,8 @@ export const put = <T>(url: string, data: unknown): Promise<T> => {
 export const del = <T>(url: string): Promise<T> => {
   return apiClient.delete(url);
 };
+
+//
+export const patch = <T>(url: string, data: unknown): Promise<T> => {
+  return apiClient.patch(url, data);
+};

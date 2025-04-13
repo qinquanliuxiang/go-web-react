@@ -5,8 +5,10 @@ import {
   userLoginRequest,
   userLoginResponse,
   UserRegistyRequest,
+  UserUpdateRequest,
+  UserUpPwdRequest,
 } from "@/types/user";
-import { del, get, post, put } from "./api";
+import { del, get, patch, post, put } from "./api";
 import { ApiResponse } from "@/types/index";
 export function UserLogin(data: userLoginRequest): Promise<userLoginResponse> {
   return post<userLoginResponse>("/api/v1/users/login", data);
@@ -64,4 +66,14 @@ export function userRemoveRole(
   return post<ApiResponse>(`/api/v1/users/${id}/roles`, {
     roleNames: roleNames,
   });
+}
+
+export function userUpdate(data: UserUpdateRequest): Promise<ApiResponse> {
+  return put<ApiResponse>(`/api/v1/users`, data);
+}
+
+export function userUpdatePassword(
+  data: UserUpPwdRequest
+): Promise<ApiResponse> {
+  return patch<ApiResponse>(`/api/v1/users`, data);
 }

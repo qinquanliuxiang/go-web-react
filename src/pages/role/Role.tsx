@@ -1,17 +1,23 @@
 import usePaginationParams from "@/hooks/usePaginationParams";
 import useSearchParamsHook from "@/hooks/useSearchParams";
-import { RoleList } from "@/services/role";
+import { RoleDelete, RoleList } from "@/services/role";
 import { RoleItem, roleListRequest } from "@/types/role";
 import { useRequest } from "ahooks";
 import { Button, Input, Select, Space, Table, Tooltip } from "antd";
 import { useMemo, useState } from "react";
-import { EyeOutlined } from "@ant-design/icons";
-import RoleDetailPage from "@/components/role/RoleEdit";
+import {
+  DeleteOutlined,
+  UserOutlined,
+  UserSwitchOutlined,
+} from "@ant-design/icons";
+import RoleDetailPage from "@/components/role/RolePolicesEdit";
 import { GetPolicyList } from "@/services/policy";
 import useApp from "antd/es/app/useApp";
+import CreateRoleComponent from "@/components/role/CreateRole";
+import RoleEditComponent from "@/components/role/RoleEdit";
 const { Search } = Input;
 const RolePage = () => {
-  const { message } = useApp();
+  const { message, modal } = useApp();
   // 分页参数管理
   const { pageNum, pageSizeNum, statusNum, setPagination } =
     usePaginationParams({
@@ -48,25 +54,75 @@ const RolePage = () => {
     refreshDeps: [pageNum, pageSizeNum, value],
   });
 
+  const { run: delRun, loading: delLoad } = useRequest(RoleDelete, {
+    manual: true,
+    debounceWait: 500,
+    onSuccess: () => {
+      message.success("删除成功");
+      refresh();
+    },
+    onError: (err) => message.error(`${err.message}`),
+  });
+
   const [roleId, setRoleId] = useState("");
   const [roleEdit, setRoleEdit] = useState(false);
+  const [editOpen, setEditRole] = useState<boolean>(false);
+  const [roleRecord, setRoleRecord] = useState<RoleItem>({} as RoleItem);
   const columns = [
     { title: "角色ID", dataIndex: "id" },
     { title: "角色名称", dataIndex: "name" },
-    { title: "角色描述", dataIndex: "description" },
+    {
+      title: "角色描述",
+      dataIndex: "description",
+      render: (text: string) => (
+        <div className="cursor-pointer">
+          <Tooltip title={text}>
+            {text?.length > 20 ? text.slice(0, 20) + "..." : text || "-"}
+          </Tooltip>
+        </div>
+      ),
+    },
     {
       title: "操作",
-      width: 100,
+      width: 150,
       render: (_: unknown, record: RoleItem) => (
         <>
           <Tooltip title="编辑角色">
             <Button
               type="link"
-              icon={<EyeOutlined />}
+              icon={<UserOutlined />}
+              onClick={() => {
+                setRoleRecord(record);
+                setEditRole(true);
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="编辑策略">
+            <Button
+              type="link"
+              icon={<UserSwitchOutlined />}
               onClick={() => {
                 listPolicesRun();
                 setRoleId(record.id.toString());
                 setRoleEdit(true);
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="删除角色">
+            <Button
+              type="link"
+              danger
+              loading={delLoad}
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                modal.confirm({
+                  title: "确认删除角色",
+                  content: `确定要删除角色【${record.name}】吗？该操作不可恢复！`,
+                  okText: "确定",
+                  cancelText: "取消",
+                  okType: "danger",
+                  onOk: () => delRun(record.id.toString()),
+                });
               }}
             />
           </Tooltip>
@@ -109,6 +165,8 @@ const RolePage = () => {
     }
   }, [listPolicesData]);
 
+  const [createRoleOpen, setCreateRoleOpen] = useState(false);
+
   return (
     <div className="px-4">
       <Space className="mb-4" wrap size={16}>
@@ -131,7 +189,13 @@ const RolePage = () => {
             </Select>
           }
         />
-        <Button type="primary" onClick={() => {}}>
+        <Button
+          type="primary"
+          onClick={() => {
+            listPolicesRun();
+            setCreateRoleOpen(true);
+          }}
+        >
           创建角色
         </Button>
       </Space>
@@ -159,6 +223,23 @@ const RolePage = () => {
           },
         }}
         bordered
+      />
+      <CreateRoleComponent
+        open={createRoleOpen}
+        onCancel={() => {
+          setCreateRoleOpen(false);
+        }}
+        policyOptions={policyOptions}
+        refresh={refresh}
+      />
+      <RoleEditComponent
+        refresh={refresh}
+        open={editOpen}
+        data={roleRecord}
+        handleCancel={() => {
+          setEditRole(false);
+          setRoleRecord({} as RoleItem);
+        }}
       />
       <RoleDetailPage
         policyOptions={policyOptions}

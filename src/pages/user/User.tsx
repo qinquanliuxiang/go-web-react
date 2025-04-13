@@ -1,5 +1,5 @@
 import { useRequest } from "ahooks";
-import { Button, Input, Select, Space, Table, Tooltip } from "antd";
+import { Button, Input, Select, Space, Table, Tooltip, Typography } from "antd";
 import { useState } from "react";
 import { UserDelete, UserEnable, UserList } from "@/services/user";
 import CreateUserModal from "@/components/user/CreateUserModal";
@@ -101,13 +101,28 @@ const UserPage = () => {
   // 表格列配置
   const columns = [
     { title: "ID", dataIndex: "id", width: "15%" },
-    { title: "名称", dataIndex: "name", width: "15%" },
-    { title: "邮箱", dataIndex: "email", width: "15%" },
+    { title: "名称", dataIndex: "name" },
+    {
+      title: "邮箱",
+      dataIndex: "email",
+      render: (email: string) => {
+        if (!email) return "";
+        return (
+          <Typography.Text
+            className=""
+            copyable={{ text: email, tooltips: ["点击复制邮箱", "复制成功"] }}
+          >
+            {email}
+          </Typography.Text>
+        );
+      },
+    },
     { title: "昵称", dataIndex: "nickName" },
-    { title: "手机号", dataIndex: "mobile" },
+    { title: "手机号", dataIndex: "mobile", width: "120px" },
     {
       title: "状态",
       dataIndex: "status",
+      width: "80px",
       render: (status: number) => {
         return status === 1 ? "正常" : "禁用";
       },
@@ -115,9 +130,10 @@ const UserPage = () => {
     {
       title: "操作",
       dataIndex: "action",
+      width: "100px",
       render: (_: string, record: UserListResponseItem) => {
         return (
-          <Space size="middle">
+          <Space>
             {record.status === 1 && (
               <>
                 <Tooltip title="编辑角色">
@@ -144,7 +160,9 @@ const UserPage = () => {
                         okText: "确认",
                         okType: "danger",
                         cancelText: "取消",
-                        onOk: () => delUserRun(record.id),
+                        onOk: () => {
+                          delUserRun(record.id);
+                        },
                       });
                     }}
                   />

@@ -1,22 +1,22 @@
 import { UserLogin } from "@/services/user";
 import { useRequest } from "ahooks";
-import { Button, Card, Form, Input, Typography, message } from "antd";
+import { App, Button, Card, Form, Input, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
-
 const LoginPage = () => {
-  const [messageApi, contextHolder] = message.useMessage();
-
+  const { message } = App.useApp();
   const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
+  const from = searchParams.get("from");
   const { run: loginRun, loading: loginLoading } = useRequest(UserLogin, {
     manual: true,
     onError: (error) => {
-      messageApi.error(error.message);
+      message.error(error.message);
     },
     onSuccess: (res) => {
       localStorage.setItem("token", res?.token);
-      navigate("/");
+      navigate(from ? decodeURIComponent(from) : "/", { replace: true });
     },
   });
   // 登录处理逻辑
@@ -26,7 +26,6 @@ const LoginPage = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-      {contextHolder}
       <Card
         className="w-full max-w-lg p-8"
         style={{

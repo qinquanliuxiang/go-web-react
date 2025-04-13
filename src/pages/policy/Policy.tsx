@@ -1,12 +1,16 @@
+import CreatePolicyComponent from "@/components/policy/CreatePolicy";
 import usePaginationParams from "@/hooks/usePaginationParams";
 import useSearchParamsHook from "@/hooks/useSearchParams";
-import { GetPolicyList } from "@/services/policy";
-import type { PolicyListRequest } from "@/types/policy";
+import { DeletePolicy, GetPolicyList } from "@/services/policy";
+import type { PolicyItem, PolicyListRequest } from "@/types/policy";
 import { useRequest } from "ahooks";
-import { Button, Input, Select, Space, Table } from "antd";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { App, Button, Input, Select, Space, Table, Tag, Tooltip } from "antd";
 import { useState } from "react";
+import UpdatePolicyComponent from "@/components/policy/UpdatePolicy";
 const { Search } = Input;
 const PolicyPage = () => {
+  const { modal, message } = App.useApp();
   const { pageNum, pageSizeNum, statusNum, setPagination } =
     usePaginationParams({
       defaultStatus: 1,
@@ -43,6 +47,87 @@ const PolicyPage = () => {
     }
   );
 
+  const [upOpen, setUpOpen] = useState(false);
+  const [upData, setUpDate] = useState<PolicyItem>({} as PolicyItem);
+
+  const { run: delRun, loading: delLoad } = useRequest(DeletePolicy, {
+    manual: true,
+    debounceMaxWait: 500,
+    onSuccess: () => {
+      message.success("删除成功");
+      refresh();
+    },
+    onError: (error) => {
+      message.error(error.message);
+    },
+  });
+
+  const column = [
+    {
+      title: "ID",
+      dataIndex: "id",
+    },
+    {
+      title: "名称",
+      dataIndex: "name",
+    },
+    {
+      title: "路径",
+      dataIndex: "path",
+      render: (text: string) => <Tag color="blue">{text}</Tag>,
+    },
+    {
+      title: "方法",
+      dataIndex: "method",
+      render: (text: string) => (
+        <Tag color="geekblue">{text.toUpperCase()}</Tag>
+      ),
+    },
+    {
+      title: "描述",
+      dataIndex: "describe",
+    },
+    {
+      title: "操作",
+      dataIndex: "action",
+      render: (_: unknown, record: PolicyItem) => (
+        <Space>
+          <Tooltip title="修改策略">
+            <Button
+              type="link"
+              loading={false}
+              icon={<EditOutlined />}
+              onClick={() => {
+                setUpDate(record);
+                setUpOpen(true);
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="删除策略">
+            <Button
+              type="link"
+              danger
+              loading={delLoad}
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                modal.confirm({
+                  title: "确认删除策略",
+                  content: `确定要删除策略【${record.name}】吗？该操作不可恢复！`,
+                  okText: "确定",
+                  cancelText: "取消",
+                  okType: "danger",
+                  onOk: () => {
+                    delRun(record.id.toString());
+                  },
+                });
+              }}
+            />
+          </Tooltip>
+        </Space>
+      ),
+    },
+  ];
+
   // 搜索处理（点击搜索按钮时触发）
   const handleSearch = () => {
     setPagination(1, pageSizeNum, statusNum);
@@ -55,6 +140,7 @@ const PolicyPage = () => {
     setPagination(page, size, statusNum);
   };
 
+  const [createPolicyOpen, setCreatePolicyOpen] = useState(false);
   return (
     <div className="px-4">
       <Space className="mb-4" wrap size={16}>
@@ -85,7 +171,12 @@ const PolicyPage = () => {
             </Select>
           }
         />
-        <Button type="primary" onClick={() => {}}>
+        <Button
+          type="primary"
+          onClick={() => {
+            setCreatePolicyOpen(true);
+          }}
+        >
           创建策略
         </Button>
       </Space>
@@ -94,20 +185,7 @@ const PolicyPage = () => {
         size="middle"
         rowKey="id"
         loading={loading}
-        columns={[
-          {
-            title: "ID",
-            dataIndex: "id",
-          },
-          {
-            title: "名称",
-            dataIndex: "name",
-          },
-          {
-            title: "描述",
-            dataIndex: "describe",
-          },
-        ]}
+        columns={column}
         dataSource={data?.items || []}
         scroll={{ y: `calc(100vh - 280px)` }}
         pagination={{
@@ -126,6 +204,21 @@ const PolicyPage = () => {
           },
         }}
         bordered
+      />
+      <UpdatePolicyComponent
+        data={upData}
+        open={upOpen}
+        onCancel={() => {
+          setUpOpen(false);
+        }}
+        refresh={refresh}
+      />
+      <CreatePolicyComponent
+        open={createPolicyOpen}
+        onCancel={() => {
+          setCreatePolicyOpen(false);
+        }}
+        refresh={refresh}
       />
     </div>
   );

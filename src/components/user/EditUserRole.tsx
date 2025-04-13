@@ -4,7 +4,6 @@ import { Options } from "@/types";
 import { openNewWindow } from "@/utils/openWindowns";
 import { useRequest } from "ahooks";
 import {
-  Modal,
   Descriptions,
   Image,
   Table,
@@ -15,6 +14,8 @@ import {
 } from "antd";
 import useApp from "antd/es/app/useApp";
 import { useState, useEffect, useRef } from "react";
+import ModalComponent from "../base/Modal";
+import { useUserStore } from "@/stores/userStore";
 
 interface EditUserRolePageProps {
   open: boolean;
@@ -85,8 +86,7 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
   // 选中的新角色
   const [selectedRoleId, setSelectedRoleId] = useState<string[]>();
 
-  useEffect(() => {}, [userData]);
-
+  const { fetchUser } = useUserStore();
   // 添加角色
   const { run: userAddRoleRun, loading: userAddRoleLoad } = useRequest(
     userAddRole,
@@ -94,6 +94,7 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
       manual: true,
       onSuccess: () => {
         message.success("角色添加成功");
+        fetchUser();
         refreshUser();
         setSelectedRoleId(undefined);
       },
@@ -114,6 +115,7 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
       onSuccess: () => {
         message.success("角色删除成功");
         setSelectedRowKeys([]);
+        fetchUser();
         refreshUser();
       },
       onError: (error) => {
@@ -123,129 +125,120 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
   );
 
   return (
-    <>
-      <Modal
-        title="编辑用户角色"
-        open={open}
-        onCancel={() => {
-          onCancel();
-          setSelectedRoleId(undefined);
-        }}
-        footer={null}
-        width={800}
-        destroyOnClose={true}
-        maskClosable={false}
-        loading={userLoad}
-      >
-        {/* 用户信息展示 */}
-        <Descriptions bordered column={1}>
-          <Descriptions.Item label="头像">
-            <Image src={userData?.avatar} width={64} />
-          </Descriptions.Item>
-          <Descriptions.Item label="名称">{userData?.name}</Descriptions.Item>
-          <Descriptions.Item label="昵称">
-            {userData?.nickName}
-          </Descriptions.Item>
-          <Descriptions.Item label="邮箱">{userData?.email}</Descriptions.Item>
-          <Descriptions.Item label="手机号">
-            {userData?.mobile}
-          </Descriptions.Item>
-        </Descriptions>
+    <ModalComponent
+      title="编辑用户角色"
+      width={800}
+      open={open}
+      handleCancel={() => {
+        onCancel();
+        setSelectedRoleId(undefined);
+      }}
+      confirmLoading={userLoad}
+    >
+      {/* 用户信息展示 */}
+      <Descriptions bordered column={1}>
+        <Descriptions.Item label="头像">
+          <Image src={userData?.avatar} width={64} />
+        </Descriptions.Item>
+        <Descriptions.Item label="名称">{userData?.name}</Descriptions.Item>
+        <Descriptions.Item label="昵称">{userData?.nickName}</Descriptions.Item>
+        <Descriptions.Item label="邮箱">{userData?.email}</Descriptions.Item>
+        <Descriptions.Item label="手机号">{userData?.mobile}</Descriptions.Item>
+      </Descriptions>
 
-        <Divider />
+      <Divider />
 
-        {/* 角色管理 */}
-        <Space direction="vertical" style={{ width: "100%" }}>
-          <Space>
-            <Select
-              className="min-w-2xs"
-              mode="multiple"
-              placeholder="请选择角色"
-              options={rolesOptions ? rolesOptions : []}
-              value={selectedRoleId}
-              onChange={(value) => setSelectedRoleId(value)}
-            />
-            <Button
-              type="primary"
-              loading={userAddRoleLoad}
-              onClick={() => {
-                if (selectedRoleId && userData) {
-                  modal.confirm({
-                    title: `确认添加 ${selectedRoleId} 角色？`,
-                    content: "确定要添加该角色吗？",
-                    okText: "确认",
-                    okType: "danger",
-                    cancelText: "取消",
-                    onOk: () => {
-                      userAddRoleRun(userData.id, selectedRoleId);
-                    },
-                  });
-                }
-              }}
-            >
-              添加角色
-            </Button>
-            <Button
-              danger
-              loading={removeLoad}
-              disabled={selectedRowKeys.length === 0}
-              onClick={() => {
+      {/* 角色管理 */}
+      <Space direction="vertical" style={{ width: "100%" }}>
+        <Space>
+          <Select
+            className="min-w-2xs"
+            mode="multiple"
+            placeholder="请选择角色"
+            options={rolesOptions ? rolesOptions : []}
+            value={selectedRoleId}
+            onChange={(value) => setSelectedRoleId(value)}
+          />
+          <Button
+            type="primary"
+            loading={userAddRoleLoad}
+            onClick={() => {
+              if (selectedRoleId && userData) {
                 modal.confirm({
-                  title: `确认删除 ${selectedRowKeys} 角色？`,
-                  content: "确定要删除该角色吗？",
+                  title: `确认添加 ${selectedRoleId} 角色？`,
+                  content: "确定要添加该角色吗？",
                   okText: "确认",
                   okType: "danger",
                   cancelText: "取消",
                   onOk: () => {
-                    if (userData) {
-                      handleDelete(userData.id, selectedRowKeys);
-                    }
+                    userAddRoleRun(userData.id, selectedRoleId);
                   },
                 });
-              }}
-            >
-              批量删除选中角色
-            </Button>
-          </Space>
-
-          <Table
-            size="middle"
-            rowKey="name"
-            loading={userLoad}
-            columns={[
-              { title: "角色ID", dataIndex: "id" },
-              {
-                title: "角色名称",
-                dataIndex: "name",
-                render: (_, record) => {
-                  return (
-                    <a
-                      onClick={() => {
-                        openNewWindow(
-                          `/workspace/ram/role?page=1&pageSize=10&status=1&keyword=name&value=${record.name}`
-                        );
-                      }}
-                    >
-                      {record.name}
-                    </a>
-                  );
-                },
-              },
-              { title: "角色描述", dataIndex: "description" },
-            ]}
-            dataSource={userData?.roles || []}
-            pagination={false}
-            rowSelection={{
-              selectedRowKeys,
-              onChange: (_, selectedRows) => {
-                const names = selectedRows.map((row) => row.name);
-                setSelectedRowKeys(names);
-              },
+              }
             }}
-          />
+          >
+            添加角色
+          </Button>
+          <Button
+            danger
+            loading={removeLoad}
+            disabled={selectedRowKeys.length === 0}
+            onClick={() => {
+              modal.confirm({
+                title: `确认删除 ${selectedRowKeys} 角色？`,
+                content: "确定要删除该角色吗？",
+                okText: "确认",
+                okType: "danger",
+                cancelText: "取消",
+                onOk: () => {
+                  if (userData) {
+                    handleDelete(userData.id, selectedRowKeys);
+                  }
+                },
+              });
+            }}
+          >
+            批量删除选中角色
+          </Button>
         </Space>
-      </Modal>
-    </>
+
+        <Table
+          size="middle"
+          rowKey="name"
+          loading={userLoad}
+          columns={[
+            { title: "角色ID", dataIndex: "id" },
+            {
+              title: "角色名称",
+              dataIndex: "name",
+              render: (_, record) => {
+                return (
+                  <a
+                    onClick={() => {
+                      openNewWindow(
+                        `/workspace/ram/role?page=1&pageSize=10&status=1&keyword=name&value=${record.name}`
+                      );
+                    }}
+                  >
+                    {record.name}
+                  </a>
+                );
+              },
+            },
+            { title: "角色描述", dataIndex: "description" },
+          ]}
+          dataSource={userData?.roles || []}
+          pagination={false}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: (_, selectedRows) => {
+              const names = selectedRows.map((row) => row.name);
+              setSelectedRowKeys(names);
+            },
+          }}
+        />
+      </Space>
+    </ModalComponent>
   );
 };
 

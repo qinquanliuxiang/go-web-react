@@ -22,3 +22,13 @@ export interface PolicyListRequest {
   keyword?: string;
   value?: string;
 }
+
+export interface PolicyCreateRequest {
+  name: string;
+  describe: string;
+  path: string;
+  method: string;
+}
+export interface PolicyUpdateRequest {
+  describe: string;
+}

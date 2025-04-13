@@ -6,6 +6,7 @@ import LayoutPage from "./layout/Layout";
 import loginPage from "./pages/login/Login";
 import UserPage from "./pages/user/User";
 import PolicyPage from "./pages/policy/Policy";
+import InfoPage from "./pages/user/Info";
 export type MenuItem = Required<MenuProps>["items"][number];
 
 const router = createBrowserRouter([
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
             ],
           },
         ],
+      },
+      {
+        path: "/user/info",
+        Component: InfoPage,
       },
     ],
   },

@@ -1,236 +1,120 @@
+import type { RoleItem } from "@/types/role";
+import ModalComponent from "../base/Modal";
+import { App, Form, Input } from "antd";
+import { useEffect } from "react";
+import dayjs from "dayjs";
 import { useRequest } from "ahooks";
-import {
-  Button,
-  Descriptions,
-  Skeleton,
-  Table,
-  Tag,
-  Space,
-  Modal,
-  Select,
-} from "antd";
-import { RoleAddPolices, RoleQuery, RoleRemovePolices } from "@/services/role";
-import { useEffect, useState } from "react";
-import useApp from "antd/es/app/useApp";
-import { openNewWindow } from "@/utils/openWindowns";
-import type { PolicyItem } from "@/types/policy";
-import { PolicyOptions } from "@/types";
+import { UpdateRole } from "@/services/role";
 
 interface RoleEditComponentProps {
-  policyOptions: PolicyOptions[] | undefined;
   open: boolean;
-  id: string;
-  onCancel: () => void;
+  handleCancel: () => void;
+  refresh: () => void;
+  data: RoleItem | undefined;
 }
 
-const RoleDetailPage = ({
-  id,
+const RoleEditComponent = ({
   open,
-  onCancel,
-  policyOptions,
+  refresh,
+  handleCancel,
+  data,
 }: RoleEditComponentProps) => {
-  const { modal, message } = useApp();
-  const [selectedPolciyId, setSelectedPolciyId] = useState<string[]>([]);
+  const [form] = Form.useForm();
+  const { message } = App.useApp();
   useEffect(() => {
-    if (open) {
-      roleRun(id);
-    }
-  }, [open]);
+    if (!data || !open) return;
+    const createdAt = dayjs
+      .unix(Number(data.createdAt))
+      .format("YYYY-MM-DD HH:mm:ss");
 
-  // 获取角色详情（带权限）
-  const {
-    run: roleRun,
-    data: roleData,
-    loading: roleLoad,
-    refresh: roleRefresh,
-  } = useRequest(RoleQuery, {
+    const updatedAt = dayjs
+      .unix(Number(data.updatedAt))
+      .format("YYYY-MM-DD HH:mm:ss");
+    form.setFieldsValue({
+      id: data.id,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      name: data.name,
+      describe: data.description,
+    });
+  }, [data, open]);
+
+  const OnCancel = () => {
+    form.resetFields();
+    handleCancel();
+  };
+
+  const { run, loading } = useRequest(UpdateRole, {
     manual: true,
+    onSuccess: () => {
+      message.success("修改成功");
+      refresh();
+      OnCancel();
+    },
     onError: (err) => {
       message.error(err.message);
     },
   });
-
-  // 处理权限删除
-  const { run: roleRemovPoliyc, loading: roleRemovPoliycLoad } = useRequest(
-    RoleRemovePolices,
-    {
-      manual: true,
-      onSuccess: () => {
-        message.success("权限删除成功");
-        roleRefresh();
-      },
-      onError: (err) => message.error(`删除失败: ${err.message}`),
-    }
-  );
-
-  const { run: roleAddPolces, loading: roleAddPolcesLoad } = useRequest(
-    RoleAddPolices,
-    {
-      manual: true,
-      onSuccess: () => {
-        message.success("权限添加成功");
-        roleRefresh();
-      },
-      onError: (err) => message.error(`添加失败: ${err.message}`),
-    }
-  );
-
-  // 权限表格列配置
-  const policyColumns = [
-    {
-      title: "策略名称",
-      dataIndex: "name",
-      width: 150,
-      render: (text: string, record: PolicyItem) => {
-        return (
-          <a
-            onClick={() => {
-              openNewWindow(
-                `/workspace/ram/policy?page=1&pageSize=10&status=1&keyword=name&value=${record.name}`
-              );
-            }}
-          >
-            {text}
-          </a>
-        );
-      },
-    },
-    {
-      title: "路径",
-      dataIndex: "path",
-      render: (text: string) => <Tag color="blue">{text}</Tag>,
-    },
-    {
-      title: "方法",
-      dataIndex: "method",
-      render: (text: string) => (
-        <Tag color="geekblue">{text.toUpperCase()}</Tag>
-      ),
-    },
-    {
-      title: "描述",
-      dataIndex: "describe",
-    },
-  ];
-
-  // 当前需要删除策略
-  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-
+  const handleOk = () => {
+    form.validateFields().then((values) => {
+      run(values.id, { describe: values.describe });
+    });
+  };
   return (
-    <div className="px-4 w-full">
-      <Modal
-        destroyOnClose={true}
-        maskClosable={false}
-        width={800}
+    <>
+      <ModalComponent
         open={open}
-        onCancel={() => {
-          onCancel();
-          setSelectedPolciyId([]);
-          setSelectedRowKeys([]);
-        }}
-        title="角色详情"
-        footer={null}
+        handleCancel={OnCancel}
+        handleOk={handleOk}
+        confirmLoading={loading}
+        title="编辑角色"
       >
-        <Skeleton active loading={roleLoad}>
-          <div className="space-y-4 mt-4">
-            <div>
-              <Descriptions bordered column={1}>
-                <Descriptions.Item label="名称">
-                  {roleData?.name}
-                </Descriptions.Item>
-                <Descriptions.Item label="描述">
-                  {roleData?.description}
-                </Descriptions.Item>
-              </Descriptions>
-            </div>
-
-            <Space>
-              <Select
-                className="min-w-2xs"
-                mode="multiple"
-                placeholder="请选择角色"
-                options={policyOptions}
-                value={selectedPolciyId}
-                onChange={(value) => setSelectedPolciyId(value)}
-                // 修改 filterOption 属性的类型定义
-                filterOption={(input, option) => {
-                  if (!option) return false;
-                  return (
-                    option.rawData.name
-                      .toLowerCase()
-                      .includes(input.toLowerCase()) ||
-                    option.rawData.path
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  );
-                }}
-              />
-              <Button
-                type="primary"
-                loading={roleAddPolcesLoad}
-                onClick={() => {
-                  if (selectedPolciyId) {
-                    modal.confirm({
-                      title: "确认添加角色？",
-                      content: "确定要添加该角色吗？",
-                      okText: "确认",
-                      okType: "danger",
-                      cancelText: "取消",
-                      onOk: () => {
-                        console.log(selectedPolciyId);
-                        roleAddPolces(id, { policyIds: selectedPolciyId });
-                      },
-                    });
-                  }
-                }}
-              >
-                添加角色
-              </Button>
-              <Button
-                danger
-                loading={roleRemovPoliycLoad}
-                disabled={selectedRowKeys.length === 0}
-                onClick={() => {
-                  modal.confirm({
-                    title: "确认删除角色？",
-                    content: "确定要删除该角色吗？",
-                    okText: "确认",
-                    okType: "danger",
-                    cancelText: "取消",
-                    onOk: () => {
-                      roleRemovPoliyc(id, { policyIds: selectedRowKeys });
-                    },
-                  });
-                }}
-              >
-                批量删除选中策略
-              </Button>
-            </Space>
-
-            <div>
-              <Table
-                title={() => (
-                  <span className="text-lg font-medium">权限列表</span>
-                )}
-                rowSelection={{
-                  selectedRowKeys,
-                  onChange: (_, selectedRows) => {
-                    const ids = selectedRows.map((row) => row.id);
-                    setSelectedRowKeys(ids);
-                  },
-                }}
-                rowKey="id"
-                columns={policyColumns}
-                dataSource={roleData?.policys}
-                pagination={false}
-                bordered
-              />
-            </div>
-          </div>
-        </Skeleton>
-      </Modal>
-    </div>
+        <Form
+          form={form}
+          layout="horizontal"
+          size="large"
+          labelAlign="left"
+          labelCol={{ span: 6 }}
+        >
+          <Form.Item
+            label="角色ID"
+            rules={[{ required: true, message: "请输入角色描述" }]}
+            name="id"
+          >
+            <Input disabled />
+          </Form.Item>
+          <Form.Item
+            label="创建时间"
+            rules={[{ required: true, message: "请输入角色描述" }]}
+            name="createdAt"
+          >
+            <Input disabled />
+          </Form.Item>
+          <Form.Item
+            label="更新时间"
+            rules={[{ required: true, message: "请输入角色描述" }]}
+            name="updatedAt"
+          >
+            <Input disabled />
+          </Form.Item>
+          <Form.Item
+            label="角色名称"
+            rules={[{ required: true, message: "请输入角色描述" }]}
+            name="name"
+          >
+            <Input disabled />
+          </Form.Item>
+          <Form.Item
+            required
+            rules={[{ required: true, message: "请输入角色描述" }]}
+            label="角色描述"
+            name="describe"
+          >
+            <Input />
+          </Form.Item>
+        </Form>
+      </ModalComponent>
+    </>
   );
 };
-
-export default RoleDetailPage;
+export default RoleEditComponent;

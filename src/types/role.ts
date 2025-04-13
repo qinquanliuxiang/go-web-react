@@ -28,3 +28,13 @@ export interface RoleItem {
 export interface RolePolicyRequest {
   policyIds: string[];
 }
+
+export interface RoleCreateRequest {
+  name: string;
+  describe: string;
+  policyIds: string[];
+}
+
+export interface RoleUpdateRequest {
+  describe: string;
+}

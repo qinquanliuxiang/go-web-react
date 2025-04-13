@@ -2,12 +2,13 @@
 import { useContext } from "react";
 import { GlobalContext } from "@/components/ThemeProvider";
 import {
+  App,
   Avatar,
+  Button,
   Card,
   Divider,
   Dropdown,
   MenuProps,
-  message,
   Space,
   Spin,
 } from "antd";
@@ -21,6 +22,8 @@ import KubernetesIcon from "@/assets/kubernetes.svg?react";
 import { UserLogout } from "@/services/user";
 import { useRequest } from "ahooks";
 import { UserInfoResponse } from "@/types/user";
+import { openNewWindow } from "@/utils/openWindowns";
+import { useUserStore } from "@/stores/userStore";
 
 interface AppHeaderProps {
   background: string;
@@ -32,18 +35,20 @@ export default function AppHeader({
   userData,
   userLoad,
 }: AppHeaderProps) {
-  const [messageApi, contextHolder] = message.useMessage();
+  const { message } = App.useApp();
   const { theme } = useContext(GlobalContext);
+  const { clearUser } = useUserStore();
   const { run: logoutRun } = useRequest(UserLogout, {
     manual: true,
     onSuccess: () => {
-      localStorage.removeItem("token");
+      clearUser();
       window.location.href = "/login";
     },
     onError: (error) => {
-      messageApi.error(error.message);
+      message.error(error.message);
     },
   });
+
   const items: MenuProps["items"] = [
     {
       key: "profile",
@@ -78,15 +83,11 @@ export default function AppHeader({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <UserOutlined className="opacity-60" />
-              <span className="opacity-90">
-                {userData?.name || "未提供用户名"}
-              </span>
+              <span className="opacity-90">{userData?.name || ""}</span>
             </div>
             <div className="flex items-center gap-2">
               <MailOutlined className="opacity-60" />
-              <span className="opacity-90">
-                {userData?.email || "未提供邮箱"}
-              </span>
+              <span className="opacity-90">{userData?.email || ""}</span>
             </div>
           </div>
         </Card>
@@ -97,18 +98,34 @@ export default function AppHeader({
       type: "divider",
     },
     {
-      key: "logout",
+      key: "setting",
       label: (
-        <div
-          className="hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors py-2 px-4 rounded"
-          style={{ color: "#ff4d4f" }}
-          onClick={() => logoutRun()}
-        >
-          <PoweroffOutlined className="mr-2" />
-          退出登录
+        <div className="w-full text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors focus:outline-none">
+          <Button
+            type="link"
+            style={{ color: "#1890ff" }}
+            onClick={() => openNewWindow("/user/info")}
+            icon={<UserOutlined />}
+          >
+            个人信息
+          </Button>
         </div>
       ),
-      style: { margin: 0 },
+    },
+    {
+      key: "logout",
+      label: (
+        <div className="w-full text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none">
+          <Button
+            type="link"
+            style={{ color: "#ff4d4f" }}
+            onClick={() => logoutRun()}
+            icon={<PoweroffOutlined />}
+          >
+            退出登录
+          </Button>
+        </div>
+      ),
     },
   ];
 
@@ -121,7 +138,6 @@ export default function AppHeader({
           theme === "dark" ? "1px solid #303030" : "1px solid #f0f0f0",
       }}
     >
-      {contextHolder}
       <div className="flex items-center gap-2 text-lg font-semibold">
         <KubernetesIcon width={200} height="80%" fill="#69b1ff" />
       </div>

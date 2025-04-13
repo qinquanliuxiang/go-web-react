@@ -5,9 +5,8 @@ import Sider from "antd/es/layout/Sider";
 import { useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/AppHeader";
-import { useRequest } from "ahooks";
 import useApp from "antd/es/app/useApp";
-import { UserInfo } from "@/services/user";
+import { useUserStore } from "@/stores/userStore";
 interface openKeys {
   openKey: string[];
   selectKeys: string[];
@@ -23,6 +22,8 @@ const LayoutPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { message } = useApp();
+  const { fetchUser, error, loading: userLoad } = useUserStore();
+  const userData = useUserStore((state) => state.userData);
   const searchParams = new URLSearchParams(location.search);
   const tenant = searchParams.get("tenant");
   const newSearch = tenant ? `?tenant=${tenant}` : "";
@@ -35,11 +36,29 @@ const LayoutPage = () => {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  const { data: userData, loading: userLoad } = useRequest(UserInfo, {
-    onError: (error) => {
+  // 错误处理
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (error) {
       message.error(error.message);
-    },
-  });
+      timeoutId = setTimeout(() => {
+        useUserStore.setState({ error: null });
+      }, 3000);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [error]);
+
+  // 自动获取用户信息
+  useEffect(() => {
+    if (!userData && !userLoad) {
+      fetchUser();
+    }
+  }, [userData, userLoad]);
 
   // 子菜单点击事件
   const menuClick = (item: menuType) => {

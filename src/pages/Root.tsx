@@ -1,33 +1,19 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 function Root() {
-  const isLoggedIn = !!localStorage.getItem("token");
   const location = useLocation();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!isLoggedIn && location.pathname !== "/login") {
-      navigate("/login", { replace: true });
-    }
+  const token = localStorage.getItem("token");
+  if (!token) {
+    const fullPath = location.pathname + location.search;
+    return (
+      <Navigate to={`/login?from=${encodeURIComponent(fullPath)}`} replace />
+    );
+  }
 
-    let path = "";
-    if (isLoggedIn) {
-      switch (location.pathname) {
-        case "/login":
-          path = "/workspace/ram/user";
-          break;
-        case "/":
-          path = "/workspace/ram/user";
-          break;
-        default:
-          path = location.pathname;
-          break;
-      }
-    }
-    const search = location.search;
-    navigate(path + search, { replace: true });
-  }, []);
+  if (location.pathname === "/") {
+    return <Navigate to="/workspace" replace />;
+  }
 
   return <Outlet />;
 }
