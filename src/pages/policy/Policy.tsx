@@ -90,6 +90,7 @@ const PolicyPage = () => {
     {
       title: "操作",
       dataIndex: "action",
+      width: "100px",
       render: (_: unknown, record: PolicyItem) => (
         <Space>
           <Tooltip title="修改策略">
