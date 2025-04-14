@@ -1,14 +1,12 @@
 // services/api.ts
 import { ApiResponse } from "@/types";
 import axios, { AxiosError } from "axios";
-const viteEnv = import.meta.env.VITE_ENV || "dev";
 let host = "";
-
-switch (viteEnv) {
-  case "dev":
+switch (import.meta.env.MODE) {
+  case "development":
     host = "http://127.0.0.1:8080";
     break;
-  case "pro": {
+  case "production": {
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
     const prot = window.location.port;

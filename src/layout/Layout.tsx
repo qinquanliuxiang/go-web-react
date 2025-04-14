@@ -58,7 +58,7 @@ const LayoutPage = () => {
     if (!userData && !userLoad) {
       fetchUser();
     }
-  }, [userData, userLoad]);
+  }, [fetchUser, userData, userLoad]);
 
   // 子菜单点击事件
   const menuClick = (item: menuType) => {
