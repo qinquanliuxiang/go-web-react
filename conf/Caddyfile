@@ -1,10 +1,23 @@
 qqlx.net {
-  root * /srv
-  encode
-  handle /api/* {
-    reverse_proxy backend:8080
-  }
-  try_files {path} /index.html
-  file_server
-  tls qinquanliuxiang@qq.com
+	root * /srv
+	encode
+
+	log {
+		output stdout
+	}
+
+	route {
+		# 先处理 API 路由
+		handle /api/* {
+			reverse_proxy backend:8080
+		}
+
+		# 其他请求走静态资源逻辑
+		handle {
+			try_files {path} /index.html
+			file_server
+		}
+	}
+
+	tls qinquanliuxiang@qq.com
 }
