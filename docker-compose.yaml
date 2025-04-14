@@ -13,6 +13,17 @@ services:
       - $PWD/site:/srv
       - caddy_data:/data
       - caddy_config:/config
+  backend:
+    image: docker.io/qqlx/go-web:latest
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    environment:
+      - CONFIG_PATH=/app/config.yaml
+      - CASBIN_MODE_PATH=/app/model.conf
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./model.conf:/app/model.conf
 
 volumes:
   caddy_data:
