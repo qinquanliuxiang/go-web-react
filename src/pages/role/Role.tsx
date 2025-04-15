@@ -3,7 +3,7 @@ import useSearchParamsHook from "@/hooks/useSearchParams";
 import { RoleDelete, RoleList } from "@/services/role";
 import { RoleItem, roleListRequest } from "@/types/role";
 import { useRequest } from "ahooks";
-import { Button, Input, Select, Space, Table, Tooltip } from "antd";
+import { Button, Input, Select, Space, Tooltip } from "antd";
 import { useMemo, useState } from "react";
 import {
   DeleteOutlined,
@@ -15,6 +15,7 @@ import { GetPolicyList } from "@/services/policy";
 import useApp from "antd/es/app/useApp";
 import CreateRoleComponent from "@/components/role/CreateRole";
 import RoleEditComponent from "@/components/role/RoleEdit";
+import DynamicTable from "@/components/base/DynamicTable";
 const { Search } = Input;
 const RolePage = () => {
   const { message, modal } = useApp();
@@ -69,22 +70,21 @@ const RolePage = () => {
   const [editOpen, setEditRole] = useState<boolean>(false);
   const [roleRecord, setRoleRecord] = useState<RoleItem>({} as RoleItem);
   const columns = [
-    { title: "角色ID", dataIndex: "id" },
-    { title: "角色名称", dataIndex: "name" },
+    { title: "角色ID", dataIndex: "id", width: 150 },
+    { title: "角色名称", dataIndex: "name", width: 150 },
     {
       title: "角色描述",
       dataIndex: "description",
+      ellipsis: true,
       render: (text: string) => (
-        <div className="cursor-pointer">
-          <Tooltip title={text}>
-            {text?.length > 20 ? text.slice(0, 20) + "..." : text || "-"}
-          </Tooltip>
-        </div>
+        <Tooltip title={text} placement="topLeft">
+          <span>{text}</span>
+        </Tooltip>
       ),
     },
     {
       title: "操作",
-      width: 150,
+      width: 130,
       render: (_: unknown, record: RoleItem) => (
         <>
           <Tooltip title="编辑角色">
@@ -200,13 +200,11 @@ const RolePage = () => {
         </Button>
       </Space>
 
-      <Table
-        size="middle"
-        rowKey="id"
+      <DynamicTable
+        extraHeight={80}
         loading={roleLoad}
         columns={columns}
         dataSource={roleData?.items || []}
-        scroll={{ y: `calc(100vh - 280px)` }}
         pagination={{
           pageSizeOptions: ["10", "20", "50", "100"],
           showTotal: (total, range) =>

@@ -222,7 +222,6 @@ const InfoPage = () => {
               <div className="flex gap-4 mt-auto pt-6">
                 <Button
                   type="primary"
-                  // htmlType="submit"
                   onClick={() => {
                     modal.confirm({
                       title: "确认修改个人信息？",

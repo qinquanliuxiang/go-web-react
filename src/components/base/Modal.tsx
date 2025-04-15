@@ -28,7 +28,6 @@ const ModalComponent = ({
         body: { margin: "20px", ...styles?.body },
         ...styles,
       }}
-      closable={false}
       destroyOnClose={true}
       maskClosable={false}
       okText="确认"

@@ -3,19 +3,11 @@ import { userAddRole, userQuery, userRemoveRole } from "@/services/user";
 import { Options } from "@/types";
 import { openNewWindow } from "@/utils/openWindowns";
 import { useRequest } from "ahooks";
-import {
-  Descriptions,
-  Image,
-  Table,
-  Button,
-  Select,
-  Space,
-  Divider,
-} from "antd";
+import { Descriptions, Image, Button, Select, Space, Divider } from "antd";
 import useApp from "antd/es/app/useApp";
 import { useState, useEffect, useRef } from "react";
 import ModalComponent from "../base/Modal";
-import { useUserStore } from "@/stores/userStore";
+import DynamicTable from "../base/DynamicTable";
 
 interface EditUserRolePageProps {
   open: boolean;
@@ -86,7 +78,6 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
   // 选中的新角色
   const [selectedRoleId, setSelectedRoleId] = useState<string[]>();
 
-  const { fetchUser } = useUserStore();
   // 添加角色
   const { run: userAddRoleRun, loading: userAddRoleLoad } = useRequest(
     userAddRole,
@@ -94,7 +85,6 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
       manual: true,
       onSuccess: () => {
         message.success("角色添加成功");
-        fetchUser();
         refreshUser();
         setSelectedRoleId(undefined);
       },
@@ -115,7 +105,6 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
       onSuccess: () => {
         message.success("角色删除成功");
         setSelectedRowKeys([]);
-        fetchUser();
         refreshUser();
       },
       onError: (error) => {
@@ -134,6 +123,8 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
         setSelectedRoleId(undefined);
       }}
       confirmLoading={userLoad}
+      footer={null}
+      maskClosable={false}
     >
       {/* 用户信息展示 */}
       <Descriptions bordered column={1}>
@@ -202,15 +193,15 @@ const EditUserRolePage = ({ open, id, onCancel }: EditUserRolePageProps) => {
           </Button>
         </Space>
 
-        <Table
-          size="middle"
-          rowKey="name"
+        <DynamicTable
+          extraHeight={260}
           loading={userLoad}
           columns={[
-            { title: "角色ID", dataIndex: "id" },
+            { title: "角色ID", dataIndex: "id", width: 140 },
             {
               title: "角色名称",
               dataIndex: "name",
+              width: 140,
               render: (_, record) => {
                 return (
                   <a

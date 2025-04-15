@@ -5,9 +5,10 @@ import { DeletePolicy, GetPolicyList } from "@/services/policy";
 import type { PolicyItem, PolicyListRequest } from "@/types/policy";
 import { useRequest } from "ahooks";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { App, Button, Input, Select, Space, Table, Tag, Tooltip } from "antd";
+import { App, Button, Input, Select, Space, Tag, Tooltip } from "antd";
 import { useState } from "react";
 import UpdatePolicyComponent from "@/components/policy/UpdatePolicy";
+import DynamicTable from "@/components/base/DynamicTable";
 const { Search } = Input;
 const PolicyPage = () => {
   const { modal, message } = App.useApp();
@@ -66,10 +67,12 @@ const PolicyPage = () => {
     {
       title: "ID",
       dataIndex: "id",
+      width: 150,
     },
     {
       title: "名称",
       dataIndex: "name",
+      width: 200,
     },
     {
       title: "路径",
@@ -79,6 +82,7 @@ const PolicyPage = () => {
     {
       title: "方法",
       dataIndex: "method",
+      width: 80,
       render: (text: string) => (
         <Tag color="geekblue">{text.toUpperCase()}</Tag>
       ),
@@ -86,6 +90,12 @@ const PolicyPage = () => {
     {
       title: "描述",
       dataIndex: "describe",
+      ellipsis: true,
+      render: (text: string) => (
+        <Tooltip title={text} placement="topLeft">
+          <span>{text}</span>
+        </Tooltip>
+      ),
     },
     {
       title: "操作",
@@ -182,13 +192,11 @@ const PolicyPage = () => {
         </Button>
       </Space>
 
-      <Table
-        size="middle"
-        rowKey="id"
+      <DynamicTable
+        extraHeight={80}
         loading={loading}
         columns={column}
         dataSource={data?.items || []}
-        scroll={{ y: `calc(100vh - 280px)` }}
         pagination={{
           pageSizeOptions: ["10", "20", "50", "100"],
           showTotal: (total, range) =>

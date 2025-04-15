@@ -68,6 +68,7 @@ const RoleEditComponent = ({
         handleOk={handleOk}
         confirmLoading={loading}
         title="编辑角色"
+        closable={false}
       >
         <Form
           form={form}

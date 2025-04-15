@@ -1,5 +1,5 @@
 import { useRequest } from "ahooks";
-import { Button, Input, Select, Space, Table, Tooltip, Typography } from "antd";
+import { Button, Input, Select, Space, Tooltip, Typography } from "antd";
 import { useState } from "react";
 import { UserDelete, UserEnable, UserList } from "@/services/user";
 import CreateUserModal from "@/components/user/CreateUserModal";
@@ -10,6 +10,7 @@ import EditUserRolePage from "@/components/user/EditUserRole";
 import { EditOutlined, StopOutlined, CheckOutlined } from "@ant-design/icons";
 import EnableUserComponent from "@/components/user/EnableUser";
 import useApp from "antd/es/app/useApp";
+import DynamicTable from "@/components/base/DynamicTable";
 const { Search } = Input;
 const UserPage = () => {
   const { modal, message } = useApp();
@@ -100,8 +101,20 @@ const UserPage = () => {
 
   // 表格列配置
   const columns = [
-    { title: "ID", dataIndex: "id", width: "15%" },
-    { title: "名称", dataIndex: "name" },
+    { title: "ID", dataIndex: "id", width: 150, ellipsis: true },
+    {
+      title: "名称",
+      dataIndex: "name",
+      width: 150,
+      ellipsis: true,
+      render: (name: string) => {
+        return (
+          <Tooltip title={name} placement="topLeft">
+            <span>{name}</span>
+          </Tooltip>
+        );
+      },
+    },
     {
       title: "邮箱",
       dataIndex: "email",
@@ -246,13 +259,11 @@ const UserPage = () => {
         </Button>
       </Space>
 
-      <Table
-        size="middle"
-        rowKey="id"
+      <DynamicTable
+        extraHeight={80}
         loading={loading}
         columns={columns}
         dataSource={data?.items || []}
-        scroll={{ y: `calc(100vh - 280px)` }}
         pagination={{
           pageSizeOptions: ["10", "20", "50", "100"],
           showTotal: (total, range) =>

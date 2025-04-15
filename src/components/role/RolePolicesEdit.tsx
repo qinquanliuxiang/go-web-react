@@ -1,20 +1,13 @@
 import { useRequest } from "ahooks";
-import {
-  Button,
-  Descriptions,
-  Skeleton,
-  Table,
-  Tag,
-  Space,
-  Select,
-} from "antd";
+import { Button, Descriptions, Skeleton, Tag, Space, Select } from "antd";
 import { RoleAddPolices, RoleQuery, RoleRemovePolices } from "@/services/role";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useApp from "antd/es/app/useApp";
 import { openNewWindow } from "@/utils/openWindowns";
 import type { PolicyItem } from "@/types/policy";
 import { PolicyOptions } from "@/types";
 import ModalComponent from "../base/Modal";
+import DynamicTable from "../base/DynamicTable";
 
 interface RoleEditComponentProps {
   policyOptions: PolicyOptions[] | undefined;
@@ -49,6 +42,15 @@ const RoleDetailPage = ({
       message.error(err.message);
     },
   });
+
+  const filteredOptions = useMemo(() => {
+    return (
+      policyOptions?.filter(
+        (option) =>
+          !roleData?.policys?.some((policy) => policy.id === option.value)
+      ) || []
+    );
+  }, [policyOptions, roleData?.policys]);
 
   // 处理权限删除
   const { run: roleRemovPoliyc, loading: roleRemovPoliycLoad } = useRequest(
@@ -130,6 +132,8 @@ const RoleDetailPage = ({
         confirmLoading={false}
         width={800}
         title="角色详情"
+        footer={null}
+        closable
       >
         <Skeleton active loading={roleLoad}>
           <div className="space-y-4 mt-4">
@@ -149,10 +153,9 @@ const RoleDetailPage = ({
                 className="min-w-2xs"
                 mode="multiple"
                 placeholder="请选择角色"
-                options={policyOptions}
+                options={filteredOptions}
                 value={selectedPolciyId}
                 onChange={(value) => setSelectedPolciyId(value)}
-                // 修改 filterOption 属性的类型定义
                 filterOption={(input, option) => {
                   if (!option) return false;
                   return (
@@ -203,25 +206,23 @@ const RoleDetailPage = ({
               </Button>
             </Space>
 
-            <div>
-              <Table
-                title={() => (
-                  <span className="text-lg font-medium">权限列表</span>
-                )}
-                rowSelection={{
-                  selectedRowKeys,
-                  onChange: (_, selectedRows) => {
-                    const ids = selectedRows.map((row) => row.id);
-                    setSelectedRowKeys(ids);
-                  },
-                }}
-                rowKey="id"
-                columns={policyColumns}
-                dataSource={roleData?.policys}
-                pagination={false}
-                bordered
-              />
-            </div>
+            <DynamicTable
+              title={() => (
+                <span className="text-lg font-medium">权限列表</span>
+              )}
+              rowSelection={{
+                selectedRowKeys,
+                onChange: (_, selectedRows) => {
+                  const ids = selectedRows.map((row) => row.id);
+                  setSelectedRowKeys(ids);
+                },
+              }}
+              columns={policyColumns}
+              dataSource={roleData?.policys}
+              pagination={false}
+              bordered
+              extraHeight={260}
+            />
           </div>
         </Skeleton>
       </ModalComponent>

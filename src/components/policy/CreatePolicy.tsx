@@ -43,6 +43,7 @@ const CreatePolicyComponent = ({
       handleCancel={handleCancle}
       confirmLoading={createLoad}
       title="创建角色"
+      closable={false}
     >
       <Form
         form={form}

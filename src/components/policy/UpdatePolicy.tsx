@@ -65,6 +65,7 @@ const UpdatePolicyComponent = ({
   };
   return (
     <ModalComponent
+      closable={false}
       title="创建角色"
       open={open}
       handleOk={handleOk}
