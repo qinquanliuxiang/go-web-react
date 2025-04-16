@@ -7,6 +7,7 @@ import loginPage from "./pages/login/Login";
 import UserPage from "./pages/user/User";
 import PolicyPage from "./pages/policy/Policy";
 import InfoPage from "./pages/user/Info";
+import TestCssPage from "./test/TestFlex";
 export type MenuItem = Required<MenuProps>["items"][number];
 
 const router = createBrowserRouter([
@@ -46,6 +47,15 @@ const router = createBrowserRouter([
   {
     path: "/login",
     Component: loginPage,
+  },
+  {
+    path: "test",
+    children: [
+      {
+        path: "flex",
+        Component: TestCssPage,
+      },
+    ],
   },
 ]);
 
